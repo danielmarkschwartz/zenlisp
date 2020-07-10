@@ -1,0 +1,10 @@
+zenlisp
+*.o
+*.dSYM
+
+*.swp
+*.swo
+*~
+
+.DS_Store
+thumbs.db
