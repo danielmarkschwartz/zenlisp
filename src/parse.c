@@ -98,7 +98,7 @@ static char *get_whilef(char **s, bool(*f)(char)) {
 
 static bool is_oneof(char c, char *s) { return c != 0 && !!strchr(s, c); }
 
-char *ident_init = "_-+!?*&^%$#@<>/=|,";
+char *ident_init = "_+!?*&^%$#@<>/=|,";
 static bool is_ident_init(char c)   { return isalpha(c) || is_oneof(c, ident_init); }
 static bool is_ident(char c)        { return isalnum(c) || is_oneof(c, ident_init); }
 
@@ -134,7 +134,7 @@ start:
         if(s[0] == '(')
             { stack[depth++] = OPEN_SENTINEL; s++; goto start;}
 
-        elif(isdigit(*s))
+        elif(isdigit(*s) || *s == '-')
             stack[depth++] = val_int( strtoimax(s, &s, 0) );
 
         elif(is_ident_init(*s))
