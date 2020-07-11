@@ -8,16 +8,9 @@
 #include "common.h"
 #include "parse.h"
 
-// Wrapper around malloc that cannot fail
-void *vl_malloc(size_t n) {
-    void *ret = malloc(n);
-    assert(ret);
-    return ret;
-}
-
 // Allocates new values that given type
 #define VAL_ALLOC(...) {\
-    struct val *r = vl_malloc(sizeof *r);\
+    struct val *r = zl_malloc(sizeof *r);\
     *r = (struct val){__VA_ARGS__};\
     return r;\
 }
