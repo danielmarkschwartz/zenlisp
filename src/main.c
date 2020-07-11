@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "parse.h"
+#include "interpret.h"
 
 int main(int argc, char **argv) {
     if(argc == 2 && strcmp(argv[1], "-v") == 0) {
@@ -25,6 +26,9 @@ int main(int argc, char **argv) {
         }
     } else  buf = argv[1];
 
+    struct context ctx;
+    ctx_init(&ctx);
+
     char *err; struct val *v; int i;
     for(;;) {
         i = parse_expr(buf, &v, &err);
@@ -36,10 +40,15 @@ int main(int argc, char **argv) {
             break;
         }
         if(!v) break;
-        val_print(v);
+        struct val *ret = eval(&ctx, v);
+        val_print(ret);
         val_free(v);
+        val_free(ret);
+
         buf = &buf[i];
     }
+
+    ctx_free(&ctx);
 
     return 0;
 }
