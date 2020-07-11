@@ -42,13 +42,9 @@ int main(int argc, char **argv) {
         if(!v) break;
         struct val *ret = eval(&ctx, v);
         val_print(ret);
-        val_free(v);
-        val_free(ret);
 
         buf = &buf[i];
     }
-
-    ctx_free(&ctx);
 
     return 0;
 }

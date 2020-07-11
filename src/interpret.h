@@ -21,4 +21,3 @@ void ns_pop(struct context *ctx);
 void ns_set(struct context *ctx, char *name, struct val *val);
 struct val *ns_lookup(struct context *ctx, char *name);
 void ctx_init(struct context *ctx);
-void ctx_free(struct context *ctx);

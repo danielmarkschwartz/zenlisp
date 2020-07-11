@@ -24,24 +24,6 @@ struct val *val_func(struct val *args, struct val *body)VAL_ALLOC(VAL_FUNC, .arg
 struct val *val_builtin(builtin_t b)                    VAL_ALLOC(VAL_BUILTIN, .builtin=b)
 #undef VAL_ALLOC
 
-// Free()'s value
-void val_free(struct val *v) {
-    if(!v) return;
-
-    //TODO: convert to non-recursive algorithm
-    switch(v->type) {
-    case VAL_INT:                                       break;
-    case VAL_STR: case VAL_ATOM: case VAL_IDENT: case VAL_ERR:
-                                                        free(v->s); break;
-    case VAL_CONS:                                      val_free(v->car); val_free(v->cdr); break;
-    case VAL_FUNC:                                      val_free(v->args); val_free(v->body); break;
-    case VAL_BUILTIN:                                   break;
-    }
-
-    free(v);
-}
-
-
 #define LEFT(n) (PARSE_MAX_STR-n-1)
 char *val_repr(struct val *v) {
     if(!v) return strdup("()");
@@ -119,7 +101,7 @@ static bool is_ident(char c)        { return isalnum(c) || is_oneof(c, ident_ini
 
 
 #define OPEN_SENTINEL (void*)0x12345679
-#define ERR(e) do{*err = e; while(depth) if(stack[--depth] != OPEN_SENTINEL) val_free(stack[depth]); return -(s-src);}while(0)
+#define ERR(e) do{*err = e; while(depth) if(stack[--depth] != OPEN_SENTINEL)  return -(s-src);}while(0)
 
 // Parses a single expr from src string, filling val with the parsed value
 //
@@ -168,7 +150,7 @@ start:
             struct val *v = NULL;
             while(depth > 0 && stack[--depth] != OPEN_SENTINEL)
                 v = val_cons(stack[depth], v);
-            if(stack[depth] != OPEN_SENTINEL) { val_free(v); ERR("Unmatched )");}
+            if(stack[depth] != OPEN_SENTINEL) ERR("Unmatched )");
             stack[depth++] = v; s++;
         }
         else ERR("Unexpected character");

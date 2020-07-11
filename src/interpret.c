@@ -15,14 +15,8 @@ void ns_push(struct context *ctx) {
 
 void ns_pop(struct context *ctx) {
     assert(ctx);
-
     struct ns *up = NULL;
     if(ctx->ns) up = ctx->ns->up;
-
-    free(ctx->ns->names);
-    free(ctx->ns->vals);
-    free(ctx->ns);
-
     ctx->ns = up;
 }
 
@@ -69,11 +63,6 @@ void ctx_init(struct context *ctx) {
 
     ns_push(ctx);
     ns_set(ctx, "+", val_builtin(builtin_plus));
-}
-
-void ctx_free(struct context *ctx) {
-    if(!ctx) return;
-    while(ctx->ns) ns_pop(ctx);
 }
 
 struct val *eval(struct context *ctx, struct val *expr) {
