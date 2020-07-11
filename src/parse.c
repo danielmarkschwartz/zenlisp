@@ -14,11 +14,14 @@
     *r = (struct val){__VA_ARGS__};\
     return r;\
 }
+struct val *val_err(char *e)                            VAL_ALLOC(VAL_ERR, .s=strdup(e))
 struct val *val_int(intmax_t i)                         VAL_ALLOC(VAL_INT, .i=i)
 struct val *val_str(char *s)                            VAL_ALLOC(VAL_STR, .s=strdup(s))
 struct val *val_atom(char *s)                           VAL_ALLOC(VAL_ATOM, .s=strdup(s))
 struct val *val_ident(char *s)                          VAL_ALLOC(VAL_IDENT, .s=strdup(s))
 struct val *val_cons(struct val *car, struct val *cdr)  VAL_ALLOC(VAL_CONS, .car=car, .cdr=cdr)
+struct val *val_func(struct val *args, struct val *body)VAL_ALLOC(VAL_FUNC, .args=args, .body=body)
+struct val *val_builtin(builtin_t b)                    VAL_ALLOC(VAL_BUILTIN, .builtin=b)
 #undef VAL_ALLOC
 
 // Free()'s value
@@ -28,8 +31,11 @@ void val_free(struct val *v) {
     //TODO: convert to non-recursive algorithm
     switch(v->type) {
     case VAL_INT:                                       break;
-    case VAL_STR: case VAL_ATOM: case VAL_IDENT:        free(v->s); break;
+    case VAL_STR: case VAL_ATOM: case VAL_IDENT: case VAL_ERR:
+                                                        free(v->s); break;
     case VAL_CONS:                                      val_free(v->car); val_free(v->cdr); break;
+    case VAL_FUNC:                                      val_free(v->args); val_free(v->body); break;
+    case VAL_BUILTIN:                                   break;
     }
 
     free(v);
@@ -40,10 +46,11 @@ void val_free(struct val *v) {
 char *val_repr(struct val *v) {
     if(!v) return strdup("()");
 
-    char buf[PARSE_MAX_STR] = {0}, *car, *cdr;
+    char buf[PARSE_MAX_STR] = {0}, *car, *cdr, *args, *body;
     size_t n = 0;
 
     switch(v->type) {
+    case VAL_ERR:   n += snprintf(&buf[n], LEFT(n), "#ERR %s", v->s); break;
     case VAL_INT:   n += snprintf(&buf[n], LEFT(n), "%ji", v->i); break;
     case VAL_STR:   n += snprintf(&buf[n], LEFT(n), "\"%s\"", v->s); break;
     case VAL_ATOM:  n += snprintf(&buf[n], LEFT(n), ":%s", v->s); break;
@@ -55,6 +62,14 @@ char *val_repr(struct val *v) {
                 cdr = val_repr(v->cdr));
         free(car); free(cdr);
         break;
+    case VAL_FUNC:
+        n += snprintf(&buf[n], LEFT(n), "λ %s %s",
+                args = val_repr(v->args),
+                body = val_repr(v->body));
+        free(args); free(body);
+        break;
+    case VAL_BUILTIN:
+        n += snprintf(&buf[n], LEFT(n), "#BUILTIN <%p>", (void*)v->builtin); break;
     }
     buf[n] = '\0';
     return strdup(buf);
