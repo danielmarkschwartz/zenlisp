@@ -25,10 +25,14 @@ struct val *val_builtin(builtin_t b)                    VAL_ALLOC(VAL_BUILTIN, .
 #undef VAL_ALLOC
 
 #define LEFT(n) (PARSE_MAX_STR-n-1)
-char *val_repr(struct val *v) {
-    if(!v) return strdup("()");
+char *_val_repr(struct val *v, bool first_cons) {
+    if(!v) {
+        //Suppress () when last element in list style cons
+        if(first_cons) return strdup("()");
+        else return strdup("");
+    }
 
-    char buf[PARSE_MAX_STR] = {0}, *car, *cdr, *args, *body;
+    char buf[PARSE_MAX_STR] = {0}, *car, *cdr, *args, *body, *fmt;
     size_t n = 0;
 
     switch(v->type) {
@@ -38,23 +42,36 @@ char *val_repr(struct val *v) {
     case VAL_ATOM:  n += snprintf(&buf[n], LEFT(n), ":%s", v->s); break;
     case VAL_IDENT: n += snprintf(&buf[n], LEFT(n), "'%s", v->s); break;
     case VAL_CONS:
-        //TODO: convert to non-recursive algorithm
-        n += snprintf(&buf[n], LEFT(n), "(%s . %s)",
-                car = val_repr(v->car),
-                cdr = val_repr(v->cdr));
+        if(!v->cdr || v->cdr->type == VAL_CONS) {
+            //Don't display . in list style cons trees
+            if(first_cons) fmt = "(%s%s)";
+            else           fmt = " %s%s";
+        } else
+            //Additional space for cons embedded in lists
+            if(first_cons) fmt = "(%s . %s)";
+            else           fmt = " (%s . %s)";
+        n += snprintf(&buf[n], LEFT(n), fmt,
+            car = _val_repr(v->car, true),
+            cdr = _val_repr(v->cdr, false));
         free(car); free(cdr);
         break;
     case VAL_FUNC:
-        n += snprintf(&buf[n], LEFT(n), "λ %s %s",
-                args = val_repr(v->args),
-                body = val_repr(v->body));
+        n += snprintf(&buf[n], LEFT(n), "λ %s → %s",
+                args = _val_repr(v->args, true),
+                body = _val_repr(v->body, true));
         free(args); free(body);
         break;
     case VAL_BUILTIN:
-        n += snprintf(&buf[n], LEFT(n), "#BUILTIN <%p>", (void*)v->builtin); break;
+        n += snprintf(&buf[n], LEFT(n), "#BUILTIN <%p>",
+                (void*)v->builtin);
+        break;
     }
     buf[n] = '\0';
     return strdup(buf);
+}
+
+char *val_repr(struct val *v) {
+    return _val_repr(v, true);
 }
 #undef LEFT
 
