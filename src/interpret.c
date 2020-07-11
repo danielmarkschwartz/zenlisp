@@ -57,12 +57,27 @@ static struct val *builtin_plus(struct context *ctx, struct val *args) {
     return val_int(acc);
 }
 
+static struct val *builtin_lambda(struct context *ctx, struct val *args) {
+    assert(args->type == VAL_CONS);
+
+    struct val *arglist = args->car;
+    if(!args->car || arglist->type != VAL_CONS)
+        return val_err("Expected argument list as first argument in lambda");
+
+    for(struct val *a = arglist; a; a = a->cdr)
+        if(!a || a->type != VAL_CONS || !a->car || a->car->type != VAL_IDENT)
+            return val_err("Expected arguments to be identifiers");
+
+    return val_func(arglist, args->cdr);
+}
+
 void ctx_init(struct context *ctx) {
     assert(ctx);
     *ctx = (struct context){0};
 
     ns_push(ctx);
     ns_set(ctx, "+", val_builtin(builtin_plus));
+    ns_set(ctx, "lambda", val_builtin(builtin_lambda));
 }
 
 struct val *eval(struct context *ctx, struct val *expr) {
