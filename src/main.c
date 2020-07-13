@@ -4,8 +4,25 @@
 #include "common.h"
 #include "parse.h"
 #include "interpret.h"
+#include "elf.h"
 
 int main(int argc, char **argv) {
+    struct elf elf;
+    elf_init(&elf);
+
+    char *text = "this is my text";
+    elf_append_text(&elf, text, strlen(text));
+
+    char *data = "this is my data";
+    elf_append_data(&elf, data, strlen(data));
+
+    elf.bss_size = 0x1234;
+
+    char *err_str = elf_write(&elf, "test.elf");
+    if(err_str) fprintf(stderr, "ERROR: %s\n", err_str);
+
+    return 0;
+
     if(argc == 2 && strcmp(argv[1], "-v") == 0) {
         printf("ZenLisp " ZENLISP_VER "\n");
         return 0;
